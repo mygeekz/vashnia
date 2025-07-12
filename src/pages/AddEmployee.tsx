@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Form,
   FormControl,
@@ -28,7 +29,15 @@ import {
   User, 
   ArrowRight,
   Save,
-  X
+  X,
+  Plus,
+  Download,
+  Printer,
+  FileText,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -46,7 +55,16 @@ const addEmployeeSchema = z.object({
     message: 'انتخاب جنسیت اجباری است'
   }),
   militaryStatus: z.string().optional(),
-  serviceDate: z.date(),
+  serviceDate: z.date({
+    message: 'انتخاب تاریخ خدمت اجباری است'
+  }),
+  tasks: z.array(z.object({
+    title: z.string().min(1, 'عنوان وظیفه اجباری است'),
+    description: z.string().min(1, 'توضیحات وظیفه اجباری است'),
+    status: z.enum(['pending', 'in_progress', 'completed']),
+    assignedDate: z.date(),
+    dueDate: z.date().optional(),
+  })).optional(),
 }).refine((data) => {
   // If gender is male, military status is required
   if (data.gender === 'male' && !data.militaryStatus) {
@@ -60,12 +78,22 @@ const addEmployeeSchema = z.object({
 
 type AddEmployeeForm = z.infer<typeof addEmployeeSchema>;
 
+type FileAttachment = {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  url: string;
+  uploadDate: Date;
+};
+
 export default function AddEmployee() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [fileAttachments, setFileAttachments] = useState<FileAttachment[]>([]);
 
   const form = useForm<AddEmployeeForm>({
     resolver: zodResolver(addEmployeeSchema),
@@ -79,7 +107,16 @@ export default function AddEmployee() {
       status: 'active',
       gender: 'male' as const,
       militaryStatus: '',
+      tasks: [],
+      dateOfJoining: new Date(),
+      serviceDate: new Date(),
     },
+  });
+
+  // Field array for tasks management
+  const { fields: taskFields, append: appendTask, remove: removeTask } = useFieldArray({
+    control: form.control,
+    name: 'tasks',
   });
 
   // Watch gender to conditionally disable military status
@@ -94,6 +131,7 @@ export default function AddEmployee() {
       console.log('Employee data:', data);
       console.log('Photo file:', photoFile);
       console.log('Document files:', documentFiles);
+      console.log('File attachments:', fileAttachments);
       
       toast({
         title: "موفقیت",
@@ -129,11 +167,90 @@ export default function AddEmployee() {
 
   const handleDocumentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
+    const newAttachments: FileAttachment[] = files.map(file => ({
+      id: Math.random().toString(36).substr(2, 9),
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      url: URL.createObjectURL(file),
+      uploadDate: new Date(),
+    }));
+    
     setDocumentFiles(prev => [...prev, ...files]);
+    setFileAttachments(prev => [...prev, ...newAttachments]);
   };
 
   const removeDocument = (index: number) => {
     setDocumentFiles(prev => prev.filter((_, i) => i !== index));
+    setFileAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const downloadFile = (attachment: FileAttachment) => {
+    const link = document.createElement('a');
+    link.href = attachment.url;
+    link.download = attachment.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "دانلود فایل",
+      description: `فایل ${attachment.name} دانلود شد`,
+    });
+  };
+
+  const printFile = (attachment: FileAttachment) => {
+    if (attachment.type.includes('image') || attachment.type.includes('pdf')) {
+      const printWindow = window.open(attachment.url, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+      
+      toast({
+        title: "چاپ فایل",
+        description: `فایل ${attachment.name} آماده چاپ است`,
+      });
+    } else {
+      toast({
+        title: "خطا",
+        description: "فقط فایل‌های تصویری و PDF قابل چاپ هستند",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const addNewTask = () => {
+    appendTask({
+      title: '',
+      description: '',
+      status: 'pending',
+      assignedDate: new Date(),
+      dueDate: undefined,
+    });
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'in_progress':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      default:
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'تکمیل شده';
+      case 'in_progress':
+        return 'در حال انجام';
+      default:
+        return 'در انتظار';
+    }
   };
 
   return (
@@ -300,7 +417,7 @@ export default function AddEmployee() {
                       </FormControl>
                       <SelectContent className="bg-card">
                         <SelectItem value="ended">پایان خدمت</SelectItem>
-                        <SelectItem value="exempt">معافیت</SelectItem>
+                        <SelectItem value="exempt">معاف</SelectItem>
                         <SelectItem value="liable">مشمول</SelectItem>
                       </SelectContent>
                     </Select>
@@ -483,12 +600,238 @@ export default function AddEmployee() {
             </CardContent>
           </Card>
 
-          {/* File Uploads */}
+          {/* Employee Tasks Section */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  وظایف و مسئولیت‌های کارمند
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addNewTask}
+                  disabled={isLoading}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  افزودن وظیفه
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {taskFields?.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>هنوز وظیفه‌ای تعریف نشده است</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addNewTask}
+                    disabled={isLoading}
+                    className="mt-2"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    اولین وظیفه را اضافه کنید
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {taskFields?.map((task, index) => (
+                    <Card key={task.id} className="border border-border/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-4">
+                          <h4 className="text-sm font-medium">وظیفه {index + 1}</h4>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeTask(index)}
+                            disabled={isLoading}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`tasks.${index}.title`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>عنوان وظیفه</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="عنوان وظیفه"
+                                    {...field}
+                                    disabled={isLoading}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`tasks.${index}.status`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>وضعیت</FormLabel>
+                                <Select 
+                                  onValueChange={field.onChange} 
+                                  value={field.value}
+                                  disabled={isLoading}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="انتخاب وضعیت" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent className="bg-card">
+                                    <SelectItem value="pending">
+                                      <div className="flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4 text-red-500" />
+                                        در انتظار
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem value="in_progress">
+                                      <div className="flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-yellow-500" />
+                                        در حال انجام
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem value="completed">
+                                      <div className="flex items-center gap-2">
+                                        <CheckCircle className="w-4 h-4 text-green-500" />
+                                        تکمیل شده
+                                      </div>
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`tasks.${index}.description`}
+                            render={({ field }) => (
+                              <FormItem className="md:col-span-2">
+                                <FormLabel>توضیحات وظیفه</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    placeholder="توضیحات کامل وظیفه..."
+                                    {...field}
+                                    disabled={isLoading}
+                                    rows={3}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`tasks.${index}.assignedDate`}
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>تاریخ تخصیص</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        variant="outline"
+                                        className={cn(
+                                          "w-full justify-start text-right font-normal",
+                                          !field.value && "text-muted-foreground"
+                                        )}
+                                        disabled={isLoading}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {field.value ? (
+                                          format(field.value, "PPP", { locale: faIR })
+                                        ) : (
+                                          <span>انتخاب تاریخ</span>
+                                        )}
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={field.value}
+                                      onSelect={field.onChange}
+                                      initialFocus
+                                      className="pointer-events-auto"
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`tasks.${index}.dueDate`}
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>مهلت انجام (اختیاری)</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        variant="outline"
+                                        className={cn(
+                                          "w-full justify-start text-right font-normal",
+                                          !field.value && "text-muted-foreground"
+                                        )}
+                                        disabled={isLoading}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {field.value ? (
+                                          format(field.value, "PPP", { locale: faIR })
+                                        ) : (
+                                          <span>انتخاب مهلت</span>
+                                        )}
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={field.value}
+                                      onSelect={field.onChange}
+                                      disabled={(date) => date < new Date()}
+                                      initialFocus
+                                      className="pointer-events-auto"
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Enhanced File Attachments Section */}
           <Card className="glass-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Upload className="w-5 h-5" />
-                آپلود فایل‌ها
+                <FileText className="w-5 h-5" />
+                مدارک و فایل‌های ضمیمه
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -532,7 +875,7 @@ export default function AddEmployee() {
 
               {/* Documents */}
               <div>
-                <Label className="text-sm font-medium">مدارک (رزومه، کارت ملی، و غیره)</Label>
+                <Label className="text-sm font-medium">مدارک (قرارداد، رزومه، کارت ملی، گواهینامه‌ها و غیره)</Label>
                 <div className="mt-2">
                   <input
                     type="file"
@@ -551,24 +894,60 @@ export default function AddEmployee() {
                     انتخاب فایل‌ها
                   </Label>
                   <p className="text-xs text-muted-foreground mt-1">
-                    فرمت PDF، Word، تصاویر
+                    فرمت PDF، Word، تصاویر - چندین فایل قابل انتخاب
                   </p>
 
-                  {/* Document List */}
-                  {documentFiles.length > 0 && (
-                    <div className="mt-4 space-y-2">
-                      {documentFiles.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
-                          <span className="text-sm truncate">{file.name}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeDocument(index)}
-                            disabled={isLoading}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
+                  {/* Enhanced Document List with Download/Print */}
+                  {fileAttachments.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      <h4 className="text-sm font-medium">فایل‌های ضمیمه شده:</h4>
+                      {fileAttachments.map((attachment, index) => (
+                        <div key={attachment.id} className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg border border-border/50">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-primary/10 rounded-lg">
+                              <FileText className="w-4 h-4 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium truncate">{attachment.name}</p>
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <span>{(attachment.size / 1024 / 1024).toFixed(2)} MB</span>
+                                <span>{format(attachment.uploadDate, "PPP", { locale: faIR })}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => downloadFile(attachment)}
+                              disabled={isLoading}
+                              title="دانلود فایل"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => printFile(attachment)}
+                              disabled={isLoading}
+                              title="چاپ فایل"
+                            >
+                              <Printer className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeDocument(index)}
+                              disabled={isLoading}
+                              title="حذف فایل"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
