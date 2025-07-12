@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import AddEmployee from "./pages/AddEmployee";
 import Tasks from "./pages/Tasks";
+import Requests from "./pages/Requests";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,11 @@ const App = () => (
           <Route path="/tasks" element={
             <DashboardLayout>
               <Tasks />
+            </DashboardLayout>
+          } />
+          <Route path="/requests" element={
+            <DashboardLayout>
+              <Requests />
             </DashboardLayout>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
