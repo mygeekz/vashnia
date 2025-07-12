@@ -42,7 +42,20 @@ const addEmployeeSchema = z.object({
   email: z.string().email('ایمیل معتبر وارد کنید'),
   dateOfJoining: z.date(),
   status: z.enum(['active', 'inactive']),
-  gender: z.string().min(1, 'انتخاب جنسیت اجباری است'),
+  gender: z.enum(['male', 'female'], {
+    message: 'انتخاب جنسیت اجباری است'
+  }),
+  militaryStatus: z.string().optional(),
+  serviceDate: z.date(),
+}).refine((data) => {
+  // If gender is male, military status is required
+  if (data.gender === 'male' && !data.militaryStatus) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'وضعیت نظام وظیفه برای مردان اجباری است',
+  path: ['militaryStatus']
 });
 
 type AddEmployeeForm = z.infer<typeof addEmployeeSchema>;
@@ -64,9 +77,13 @@ export default function AddEmployee() {
       contactNumber: '',
       email: '',
       status: 'active',
-      gender: '',
+      gender: 'male' as const,
+      militaryStatus: '',
     },
   });
+
+  // Watch gender to conditionally disable military status
+  const watchedGender = form.watch('gender');
 
   const onSubmit = async (data: AddEmployeeForm) => {
     setIsLoading(true);
@@ -228,11 +245,17 @@ export default function AddEmployee() {
                 control={form.control}
                 name="gender"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem>
                     <FormLabel>جنسیت *</FormLabel>
                     <FormControl>
                       <RadioGroup
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          // Reset military status when gender changes to female
+                          if (value === 'female') {
+                            form.setValue('militaryStatus', '');
+                          }
+                        }}
                         value={field.value}
                         className="flex gap-6"
                         disabled={isLoading}
@@ -245,12 +268,86 @@ export default function AddEmployee() {
                           <RadioGroupItem value="female" id="female" />
                           <Label htmlFor="female">زن</Label>
                         </div>
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                          <RadioGroupItem value="other" id="other" />
-                          <Label htmlFor="other">سایر</Label>
-                        </div>
                       </RadioGroup>
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="militaryStatus"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>وضعیت نظام وظیفه {watchedGender === 'male' ? '*' : ''}</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={isLoading || watchedGender === 'female'}
+                    >
+                      <FormControl>
+                        <SelectTrigger className={cn(
+                          "w-full",
+                          watchedGender === 'female' && "opacity-50 cursor-not-allowed"
+                        )}>
+                          <SelectValue placeholder={
+                            watchedGender === 'female' 
+                              ? "برای زنان قابل انتخاب نیست" 
+                              : "انتخاب وضعیت نظام وظیفه"
+                          } />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-card">
+                        <SelectItem value="ended">پایان خدمت</SelectItem>
+                        <SelectItem value="exempt">معافیت</SelectItem>
+                        <SelectItem value="liable">مشمول</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="serviceDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>تاریخ خدمت (شمسی) *</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-right font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                            disabled={isLoading}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? (
+                              format(field.value, "PPP", { locale: faIR })
+                            ) : (
+                              <span>انتخاب تاریخ خدمت</span>
+                            )}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
