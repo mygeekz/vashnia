@@ -2,57 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Vashnia Administrative System Design Tokens - RTL Professional Interface */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Professional Business Color Palette - Teal/Emerald Theme */
+    --background: 210 25% 98%;
+    --foreground: 200 15% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 200 15% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 200 15% 8%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Professional Teal */
+    --primary: 180 83% 25%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 180 83% 20%;
+    --primary-light: 180 70% 35%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Elegant Gray-Blue */
+    --secondary: 210 20% 92%;
+    --secondary-foreground: 200 15% 15%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 200 8% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Warm Emerald */
+    --accent: 160 60% 45%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Success & Warning */
+    --success: 140 65% 42%;
+    --success-foreground: 0 0% 98%;
+    
+    --warning: 45 90% 55%;
+    --warning-foreground: 45 90% 15%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: 0 75% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-    --radius: 0.5rem;
+    --border: 210 20% 88%;
+    --input: 210 20% 92%;
+    --ring: 180 83% 25%;
 
-    --sidebar-background: 0 0% 98%;
+    --radius: 0.75rem;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Gradients for Glass Effects */
+    --gradient-primary: linear-gradient(135deg, hsl(180 83% 25%), hsl(180 70% 35%));
+    --gradient-secondary: linear-gradient(135deg, hsl(210 20% 96%), hsl(210 25% 98%));
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+    
+    /* Shadows for Depth */
+    --shadow-soft: 0 4px 20px rgba(6, 78, 59, 0.08);
+    --shadow-medium: 0 8px 30px rgba(6, 78, 59, 0.12);
+    --shadow-strong: 0 20px 60px rgba(6, 78, 59, 0.18);
+    
+    /* Glass morphism effects */
+    --glass-bg: rgba(255, 255, 255, 0.25);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --glass-backdrop: blur(10px);
 
-    --sidebar-primary: 240 5.9% 10%;
-
+    /* Sidebar specific */
+    --sidebar-background: 200 25% 97%;
+    --sidebar-foreground: 200 15% 20%;
+    --sidebar-primary: 180 83% 25%;
     --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 210 20% 92%;
+    --sidebar-accent-foreground: 200 15% 15%;
+    --sidebar-border: 210 20% 88%;
+    --sidebar-ring: 180 83% 25%;
   }
 
   .dark {
@@ -97,9 +117,79 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
   }
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
+    direction: rtl;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* RTL specific adjustments */
+  [dir="rtl"] {
+    text-align: right;
+  }
+
+  /* Custom glass morphism utility classes */
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+
+  /* Professional animations */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { 
+      opacity: 0; 
+      transform: translateY(20px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  /* Custom scrollbar for RTL */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.6);
   }
 }
