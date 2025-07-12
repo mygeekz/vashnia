@@ -7,6 +7,8 @@ import { DashboardLayout } from "@/components/ui/layout/DashboardLayout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Employees from "./pages/Employees";
+import AddEmployee from "./pages/AddEmployee";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +25,16 @@ const App = () => (
           <Route path="/dashboard" element={
             <DashboardLayout>
               <Dashboard />
+            </DashboardLayout>
+          } />
+          <Route path="/employees" element={
+            <DashboardLayout>
+              <Employees />
+            </DashboardLayout>
+          } />
+          <Route path="/employees/add" element={
+            <DashboardLayout>
+              <AddEmployee />
             </DashboardLayout>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
