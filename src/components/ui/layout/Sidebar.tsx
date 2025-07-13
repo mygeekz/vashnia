@@ -5,6 +5,7 @@ import {
   ClipboardList, 
   FileText, 
   TrendingUp,
+  DollarSign,
   Settings,
   Building2,
   LogOut
@@ -13,11 +14,12 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const navigation = [
-  { name: 'داشبورد', href: '/', icon: LayoutDashboard },
+  { name: 'داشبورد', href: '/dashboard', icon: LayoutDashboard },
   { name: 'کارکنان', href: '/employees', icon: Users },
   { name: 'وظایف', href: '/tasks', icon: ClipboardList },
   { name: 'درخواست‌ها', href: '/requests', icon: FileText },
   { name: 'گزارش فروش', href: '/sales', icon: TrendingUp },
+  { name: 'حقوق و دستمزد', href: '/salary', icon: DollarSign },
   { name: 'تنظیمات', href: '/settings', icon: Settings },
 ];
 

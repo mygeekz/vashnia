@@ -37,19 +37,25 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Trash2
+  Trash2,
+  DollarSign,
+  Building
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { numberToPersianText, formatCurrency, formatNumber } from '@/lib/number-to-persian';
 
 // Form validation schema
 const addEmployeeSchema = z.object({
   fullName: z.string().min(2, 'نام باید حداقل ۲ کاراکتر باشد'),
+  nationalId: z.string().regex(/^\d{10}$/, 'کد ملی باید ۱۰ رقم باشد'),
   employeeId: z.string().min(3, 'کد کارمندی باید حداقل ۳ کاراکتر باشد'),
   jobTitle: z.string().min(2, 'سمت باید حداقل ۲ کاراکتر باشد'),
   department: z.string().min(1, 'انتخاب بخش اجباری است'),
+  branch: z.string().min(1, 'انتخاب شعبه اجباری است'),
   contactNumber: z.string().regex(/^09\d{9}$/, 'شماره موبایل معتبر وارد کنید'),
   email: z.string().email('ایمیل معتبر وارد کنید'),
   dateOfJoining: z.date(),
+  monthlySalary: z.number().min(1, 'مبلغ حقوق باید بیشتر از صفر باشد'),
   status: z.enum(['active', 'inactive']),
   gender: z.enum(['male', 'female'], {
     message: 'انتخاب جنسیت اجباری است'
@@ -58,6 +64,7 @@ const addEmployeeSchema = z.object({
   serviceDate: z.date({
     message: 'انتخاب تاریخ خدمت اجباری است'
   }),
+  additionalNotes: z.string().optional(),
   tasks: z.array(z.object({
     title: z.string().min(1, 'عنوان وظیفه اجباری است'),
     description: z.string().min(1, 'توضیحات وظیفه اجباری است'),
@@ -99,14 +106,18 @@ export default function AddEmployee() {
     resolver: zodResolver(addEmployeeSchema),
     defaultValues: {
       fullName: '',
+      nationalId: '',
       employeeId: '',
       jobTitle: '',
       department: '',
+      branch: '',
       contactNumber: '',
       email: '',
+      monthlySalary: 0,
       status: 'active',
       gender: 'male' as const,
       militaryStatus: '',
+      additionalNotes: '',
       tasks: [],
       dateOfJoining: new Date(),
       serviceDate: new Date(),
@@ -296,6 +307,25 @@ export default function AddEmployee() {
                         placeholder="نام و نام خانوادگی کارمند"
                         {...field}
                         disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="nationalId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>کد ملی *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="1234567890"
+                        {...field}
+                        disabled={isLoading}
+                        maxLength={10}
                       />
                     </FormControl>
                     <FormMessage />
@@ -528,6 +558,38 @@ export default function AddEmployee() {
 
               <FormField
                 control={form.control}
+                name="branch"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>شعبه کاری *</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={isLoading}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="انتخاب شعبه" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-card">
+                        <SelectItem value="central">دفتر مرکزی</SelectItem>
+                        <SelectItem value="north">شعبه شمال</SelectItem>
+                        <SelectItem value="south">شعبه جنوب</SelectItem>
+                        <SelectItem value="east">شعبه شرق</SelectItem>
+                        <SelectItem value="west">شعبه غرب</SelectItem>
+                        <SelectItem value="tehran">شعبه تهران</SelectItem>
+                        <SelectItem value="isfahan">شعبه اصفهان</SelectItem>
+                        <SelectItem value="shiraz">شعبه شیراز</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="dateOfJoining"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
@@ -592,6 +654,64 @@ export default function AddEmployee() {
                           <Label htmlFor="inactive">غیرفعال</Label>
                         </div>
                       </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Salary Information */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                اطلاعات حقوق و دستمزد
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-6">
+              <FormField
+                control={form.control}
+                name="monthlySalary"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>میزان حقوق ماهانه (تومان) *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number"
+                        placeholder="10000000"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        disabled={isLoading}
+                        min="0"
+                      />
+                    </FormControl>
+                    {field.value > 0 && (
+                      <div className="mt-2 p-3 bg-primary/10 rounded-lg">
+                        <p className="text-sm text-primary font-medium">
+                          معادل حروفی: {formatCurrency(field.value)}
+                        </p>
+                      </div>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="additionalNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>توضیحات و اطلاعات اضافی</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="اطلاعات اضافی درباره کارمند، تخصص‌ها، سابقه کار و سایر موارد..."
+                        {...field}
+                        disabled={isLoading}
+                        rows={4}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
