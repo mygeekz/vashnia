@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { CalendarIcon, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 import { useState } from "react";
+import { JalaliDatePicker } from "@/components/ui/jalali-date-picker";
+import { toJalaliDisplay, jalaliToGregorian, toJalaliObject } from "@/utils/date";
 
 interface Task {
   id: string;
@@ -29,8 +28,8 @@ interface Task {
 const taskSchema = z.object({
   employeeName: z.string().min(1, "نام کارمند الزامی است"),
   description: z.string().min(1, "شرح وظیفه الزامی است"),
-  assignedDate: z.date({ message: "تاریخ تعیین الزامی است" }),
-  dueDate: z.date({ message: "تاریخ تحویل الزامی است" }),
+  assignedDate: z.string().min(1, "تاریخ تعیین الزامی است"),
+  dueDate: z.string().min(1, "تاریخ تحویل الزامی است"),
   status: z.enum(["pending", "in-progress", "completed"]),
   priority: z.enum(["low", "medium", "high"]),
   department: z.string().min(1, "بخش الزامی است"),
@@ -54,8 +53,8 @@ export function TaskForm({ task, employees, departments, onSubmit, onCancel }: T
     defaultValues: {
       employeeName: task?.employeeName || "",
       description: task?.description || "",
-      assignedDate: task?.assignedDate ? new Date(task.assignedDate) : new Date(),
-      dueDate: task?.dueDate ? new Date(task.dueDate) : new Date(),
+      assignedDate: task?.assignedDate || "",
+      dueDate: task?.dueDate || "",
       status: task?.status || "pending",
       priority: task?.priority || "medium",
       department: task?.department || "",
@@ -77,19 +76,12 @@ export function TaskForm({ task, employees, departments, onSubmit, onCancel }: T
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  const formatPersianDate = (date: Date) => {
-    // Simple Persian date formatting - in a real app, use a proper Persian calendar library
-    return date.toLocaleDateString('fa-IR');
-  };
-
   const handleSubmit = (data: TaskFormData) => {
     const submissionData: Omit<Task, "id"> = {
       ...data,
-      assignedDate: formatPersianDate(data.assignedDate),
-      dueDate: formatPersianDate(data.dueDate),
       attachments,
       ...(data.status === "completed" && !task?.completedDate && {
-        completedDate: formatPersianDate(new Date())
+        completedDate: toJalaliDisplay(new Date())
       }),
     };
     onSubmit(submissionData);
@@ -177,38 +169,15 @@ export function TaskForm({ task, employees, departments, onSubmit, onCancel }: T
             control={form.control}
             name="assignedDate"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem>
                 <FormLabel>تاریخ تعیین *</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          formatPersianDate(field.value)
-                        ) : (
-                          <span>انتخاب تاریخ</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date < new Date("1900-01-01")}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <FormControl>
+                  <JalaliDatePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="انتخاب تاریخ تعیین"
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -219,38 +188,15 @@ export function TaskForm({ task, employees, departments, onSubmit, onCancel }: T
             control={form.control}
             name="dueDate"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem>
                 <FormLabel>تاریخ تحویل *</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          formatPersianDate(field.value)
-                        ) : (
-                          <span>انتخاب تاریخ</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date < new Date()}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <FormControl>
+                  <JalaliDatePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="انتخاب تاریخ تحویل"
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

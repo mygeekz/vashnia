@@ -29,9 +29,23 @@ export const Header = () => {
     navigate('/login');
   };
 
-  const handleSearch = React.useCallback((query: string) => {
-    // TODO: Implement search API call with debouncing
-    console.log('Searching for:', query);
+  const handleSearch = React.useCallback(async (query: string) => {
+    if (!query.trim()) return;
+    
+    try {
+      // In a real app, this would call /api/search?q=${query}
+      console.log('Searching for:', query);
+      // Mock search results for now
+      const mockResults = [
+        { type: 'employee', name: 'احمد محمدی', id: '001' },
+        { type: 'task', name: 'تهیه گزارش ماهانه', id: 'TASK001' },
+        { type: 'branch', name: 'شعبه تهران', id: 'BR001' }
+      ].filter(item => item.name.includes(query));
+      
+      console.log('Search results:', mockResults);
+    } catch (error) {
+      console.error('Search error:', error);
+    }
   }, []);
 
   React.useEffect(() => {
