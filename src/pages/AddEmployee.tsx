@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { numberToPersianText, formatCurrency, formatNumber } from '@/lib/number-to-persian';
+import { JalaliDatePicker } from '@/components/ui/jalali-date-picker';
 
 // Form validation schema
 const addEmployeeSchema = z.object({
@@ -592,41 +593,16 @@ export default function AddEmployee() {
                 control={form.control}
                 name="dateOfJoining"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>تاریخ استخدام *</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-right font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                            disabled={isLoading}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? (
-                              format(field.value, "PPP", { locale: faIR })
-                            ) : (
-                              <span>انتخاب تاریخ</span>
-                            )}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                  <FormItem>
+                    <FormLabel>تاریخ استخدام (شمسی) *</FormLabel>
+                    <FormControl>
+                      <JalaliDatePicker
+                        value={field.value ? field.value.toISOString() : ''}
+                        onChange={(date) => field.onChange(new Date(date))}
+                        placeholder="انتخاب تاریخ استخدام"
+                        disabled={isLoading}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

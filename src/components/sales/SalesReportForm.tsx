@@ -35,6 +35,7 @@ import {
 import { CalendarIcon, Upload, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { JalaliDatePicker } from '@/components/ui/jalali-date-picker';
 import { toast } from 'sonner';
 
 const salesReportSchema = z.object({
@@ -207,37 +208,15 @@ export const SalesReportForm = ({ open, onClose, userRole }: SalesReportFormProp
                 control={form.control}
                 name="reportDate"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>تاریخ گزارش</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "pl-3 text-right font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "yyyy/MM/dd")
-                            ) : (
-                              <span>انتخاب تاریخ</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                  <FormItem>
+                    <FormLabel>تاریخ گزارش (شمسی)</FormLabel>
+                    <FormControl>
+                      <JalaliDatePicker
+                        value={field.value ? field.value.toISOString() : ''}
+                        onChange={(date) => field.onChange(new Date(date))}
+                        placeholder="انتخاب تاریخ گزارش"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { numberToPersianText, formatCurrency, formatNumber } from '@/lib/number-to-persian';
+import { JalaliDatePicker } from '@/components/ui/jalali-date-picker';
 
 const salarySchema = z.object({
   employeeId: z.string().min(1, 'انتخاب کارمند اجباری است'),
@@ -340,38 +341,18 @@ export default function SalaryManagement({ onSalaryProcessed }: SalaryManagement
                 control={form.control}
                 name="paymentDate"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>تاریخ پرداخت حقوق *</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full md:w-1/3 justify-start text-right font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                            disabled={isLoading}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? (
-                              format(field.value, "PPP", { locale: faIR })
-                            ) : (
-                              <span>انتخاب تاریخ پرداخت</span>
-                            )}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                          className="pointer-events-auto"
+                  <FormItem>
+                    <FormLabel>تاریخ پرداخت حقوق (شمسی) *</FormLabel>
+                    <FormControl>
+                      <div className="w-full md:w-1/3">
+                        <JalaliDatePicker
+                          value={field.value ? field.value.toISOString() : ''}
+                          onChange={(date) => field.onChange(new Date(date))}
+                          placeholder="انتخاب تاریخ پرداخت"
+                          disabled={isLoading}
                         />
-                      </PopoverContent>
-                    </Popover>
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

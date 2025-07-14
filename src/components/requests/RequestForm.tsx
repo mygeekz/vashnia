@@ -15,6 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { CalendarIcon, Upload, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { JalaliDatePicker } from '@/components/ui/jalali-date-picker';
 
 const requestSchema = z.object({
   employeeName: z.string().min(1, 'نام کارمند الزامی است'),
@@ -202,40 +203,15 @@ export const RequestForm: React.FC<RequestFormProps> = ({ onSubmit, onCancel }) 
                   control={form.control}
                   name="startDate"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>تاریخ شروع مرخصی</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full pl-3 text-right font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                formatPersianDate(field.value)
-                              ) : (
-                                <span>تاریخ شروع را انتخاب کنید</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date()
-                            }
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
+                    <FormItem>
+                      <FormLabel>تاریخ شروع مرخصی (شمسی)</FormLabel>
+                      <FormControl>
+                        <JalaliDatePicker
+                          value={field.value ? field.value.toISOString() : ''}
+                          onChange={(date) => field.onChange(new Date(date))}
+                          placeholder="انتخاب تاریخ شروع"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -245,40 +221,15 @@ export const RequestForm: React.FC<RequestFormProps> = ({ onSubmit, onCancel }) 
                   control={form.control}
                   name="endDate"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>تاریخ پایان مرخصی</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full pl-3 text-right font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                formatPersianDate(field.value)
-                              ) : (
-                                <span>تاریخ پایان را انتخاب کنید</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date()
-                            }
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
+                    <FormItem>
+                      <FormLabel>تاریخ پایان مرخصی (شمسی)</FormLabel>
+                      <FormControl>
+                        <JalaliDatePicker
+                          value={field.value ? field.value.toISOString() : ''}
+                          onChange={(date) => field.onChange(new Date(date))}
+                          placeholder="انتخاب تاریخ پایان"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

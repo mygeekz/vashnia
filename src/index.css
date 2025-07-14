@@ -192,4 +192,39 @@
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.6);
   }
+
+  /* RTL-specific utilities */
+  .flex-row-reverse {
+    flex-direction: row-reverse;
+  }
+
+  .text-right {
+    text-align: right;
+  }
+
+  .text-left {
+    text-align: left;
+  }
+
+  /* Calendar RTL support */
+  .calendarWrapper {
+    direction: rtl !important;
+  }
+
+  .DatePicker__calendarContainer {
+    direction: rtl !important;
+  }
+
+  .DatePicker__calendarArrow {
+    transform: scaleX(-1);
+  }
+
+  /* RTL margin and padding utilities */
+  .mr-auto {
+    margin-right: auto;
+  }
+
+  .ml-auto {
+    margin-left: auto;
+  }
 }

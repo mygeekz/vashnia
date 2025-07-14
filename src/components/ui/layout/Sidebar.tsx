@@ -32,7 +32,8 @@ export const Sidebar = () => {
   };
 
   return (
-    <div className="w-64 bg-card border-l border-border h-screen flex flex-col shadow-soft">
+    <div className="w-64 bg-card border-l border-border h-screen flex flex-col shadow-soft"
+         style={{ borderLeft: '1px solid hsl(var(--border))', borderRight: 'none' }}>
       {/* Logo Section */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3">
