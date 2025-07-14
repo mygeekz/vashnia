@@ -43,7 +43,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { numberToPersianText, formatCurrency, formatNumber } from '@/lib/number-to-persian';
-import { JalaliDatePicker } from '@/components/ui/jalali-date-picker';
+import PersianDatePicker from '@/components/PersianDatePicker';
 
 // Form validation schema
 const addEmployeeSchema = z.object({
@@ -55,7 +55,7 @@ const addEmployeeSchema = z.object({
   branch: z.string().min(1, 'انتخاب شعبه اجباری است'),
   contactNumber: z.string().regex(/^09\d{9}$/, 'شماره موبایل معتبر وارد کنید'),
   email: z.string().email('ایمیل معتبر وارد کنید'),
-  dateOfJoining: z.date(),
+  dateOfJoining: z.string().min(1, 'تاریخ استخدام اجباری است'),
   monthlySalary: z.number().min(1, 'مبلغ حقوق باید بیشتر از صفر باشد'),
   status: z.enum(['active', 'inactive']),
   gender: z.enum(['male', 'female'], {
@@ -66,8 +66,8 @@ const addEmployeeSchema = z.object({
     title: z.string().min(1, 'عنوان وظیفه اجباری است'),
     description: z.string().min(1, 'توضیحات وظیفه اجباری است'),
     status: z.enum(['pending', 'in_progress', 'completed']),
-    assignedDate: z.date(),
-    dueDate: z.date().optional(),
+    assignedDate: z.string().min(1, 'تاریخ تخصیص اجباری است'),
+    dueDate: z.string().optional(),
   })).optional(),
 });
 
@@ -106,7 +106,7 @@ export default function AddEmployee() {
       gender: 'male' as const,
       additionalNotes: '',
       tasks: [],
-      dateOfJoining: new Date(),
+      dateOfJoining: '',
     },
   });
 
@@ -221,8 +221,8 @@ export default function AddEmployee() {
       title: '',
       description: '',
       status: 'pending',
-      assignedDate: new Date(),
-      dueDate: undefined,
+      assignedDate: '',
+      dueDate: '',
     });
   };
 
@@ -496,11 +496,12 @@ export default function AddEmployee() {
                   <FormItem>
                     <FormLabel>تاریخ استخدام (شمسی) *</FormLabel>
                     <FormControl>
-                      <JalaliDatePicker
-                        value={field.value ? field.value.toISOString() : ''}
-                        onChange={(date) => field.onChange(new Date(date))}
+                      <PersianDatePicker
+                        value={field.value}
+                        onChange={field.onChange}
                         placeholder="انتخاب تاریخ استخدام"
                         disabled={isLoading}
+                        required
                       />
                     </FormControl>
                     <FormMessage />
@@ -735,38 +736,17 @@ export default function AddEmployee() {
                             control={form.control}
                             name={`tasks.${index}.assignedDate`}
                             render={({ field }) => (
-                              <FormItem className="flex flex-col">
+                              <FormItem>
                                 <FormLabel>تاریخ تخصیص</FormLabel>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <FormControl>
-                                      <Button
-                                        variant="outline"
-                                        className={cn(
-                                          "w-full justify-start text-right font-normal",
-                                          !field.value && "text-muted-foreground"
-                                        )}
-                                        disabled={isLoading}
-                                      >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {field.value ? (
-                                          format(field.value, "PPP", { locale: faIR })
-                                        ) : (
-                                          <span>انتخاب تاریخ</span>
-                                        )}
-                                      </Button>
-                                    </FormControl>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                      mode="single"
-                                      selected={field.value}
-                                      onSelect={field.onChange}
-                                      initialFocus
-                                      className="pointer-events-auto"
-                                    />
-                                  </PopoverContent>
-                                </Popover>
+                                <FormControl>
+                                  <PersianDatePicker
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="انتخاب تاریخ تخصیص"
+                                    disabled={isLoading}
+                                    required
+                                  />
+                                </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -776,39 +756,16 @@ export default function AddEmployee() {
                             control={form.control}
                             name={`tasks.${index}.dueDate`}
                             render={({ field }) => (
-                              <FormItem className="flex flex-col">
+                              <FormItem>
                                 <FormLabel>مهلت انجام (اختیاری)</FormLabel>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <FormControl>
-                                      <Button
-                                        variant="outline"
-                                        className={cn(
-                                          "w-full justify-start text-right font-normal",
-                                          !field.value && "text-muted-foreground"
-                                        )}
-                                        disabled={isLoading}
-                                      >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {field.value ? (
-                                          format(field.value, "PPP", { locale: faIR })
-                                        ) : (
-                                          <span>انتخاب مهلت</span>
-                                        )}
-                                      </Button>
-                                    </FormControl>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                      mode="single"
-                                      selected={field.value}
-                                      onSelect={field.onChange}
-                                      disabled={(date) => date < new Date()}
-                                      initialFocus
-                                      className="pointer-events-auto"
-                                    />
-                                  </PopoverContent>
-                                </Popover>
+                                <FormControl>
+                                  <PersianDatePicker
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="انتخاب مهلت انجام"
+                                    disabled={isLoading}
+                                  />
+                                </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -90,14 +90,17 @@ export default function Tasks() {
   const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const { toast } = useToast();
-  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Check if we should open the new task modal immediately
   useEffect(() => {
-    if (location.state?.openNewTask) {
+    if (searchParams.get('new') === '1') {
       setIsTaskFormOpen(true);
+      // Remove the parameter after opening the modal
+      searchParams.delete('new');
+      setSearchParams(searchParams);
     }
-  }, [location.state]);
+  }, [searchParams, setSearchParams]);
 
   const getStatusBadge = (status: Task["status"]) => {
     const statusConfig = {

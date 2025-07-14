@@ -53,7 +53,7 @@ export default function Salary() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in" dir="rtl">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
@@ -81,11 +81,11 @@ export default function Salary() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="glass-card">
           <CardContent className="p-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-row-reverse">
               <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center">
                 <Users className="w-6 h-6 text-primary-foreground" />
               </div>
-              <div>
+              <div className="text-right">
                 <p className="text-sm text-muted-foreground">کل کارکنان</p>
                 <p className="text-2xl font-bold">{stats.totalEmployees}</p>
               </div>
@@ -95,11 +95,11 @@ export default function Salary() {
 
         <Card className="glass-card">
           <CardContent className="p-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-row-reverse">
               <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-success" />
               </div>
-              <div>
+              <div className="text-right">
                 <p className="text-sm text-muted-foreground">کل حقوق ماهانه</p>
                 <p className="text-xl font-bold">{formatNumber(stats.totalPayroll)}</p>
               </div>
@@ -109,11 +109,11 @@ export default function Salary() {
 
         <Card className="glass-card">
           <CardContent className="p-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-row-reverse">
               <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center">
                 <Receipt className="w-6 h-6 text-warning" />
               </div>
-              <div>
+              <div className="text-right">
                 <p className="text-sm text-muted-foreground">پرداخت‌های معلق</p>
                 <p className="text-2xl font-bold">{stats.pendingPayments}</p>
               </div>
@@ -123,11 +123,11 @@ export default function Salary() {
 
         <Card className="glass-card">
           <CardContent className="p-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-row-reverse">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-primary" />
               </div>
-              <div>
+              <div className="text-right">
                 <p className="text-sm text-muted-foreground">میانگین حقوق</p>
                 <p className="text-xl font-bold">{formatNumber(stats.averageSalary)}</p>
               </div>

@@ -130,7 +130,7 @@ export default function Dashboard() {
               <p className="text-sm font-medium">افزودن کارمند</p>
             </Button>
             <Button 
-              onClick={() => navigate('/tasks', { state: { openNewTask: true } })}
+              onClick={() => navigate('/tasks?new=1')}
               className="p-4 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors h-auto flex-col"
             >
               <CheckCircle className="w-6 h-6 mx-auto mb-2" />
