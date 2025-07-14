@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { notificationService } from '@/services/notifications';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { CalendarIcon, Upload, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { JalaliDatePicker } from '@/components/ui/jalali-date-picker';
+import PersianDatePicker from '@/components/PersianDatePicker';
 
 const requestSchema = z.object({
   employeeName: z.string().min(1, 'نام کارمند الزامی است'),
@@ -67,11 +68,24 @@ export const RequestForm: React.FC<RequestFormProps> = ({ onSubmit, onCancel, in
 
   const watchedRequestType = form.watch('requestType');
 
-  const handleSubmit = (data: RequestFormData) => {
+  const handleSubmit = async (data: RequestFormData) => {
+    // Submit the form
     onSubmit({
       ...data,
       attachments
     });
+
+    // Send notifications
+    try {
+      await notificationService.handleNewRequest(
+        data.employeeName,
+        data.requestType,
+        '09123456789', // Manager mobile - would come from user management
+        'manager-id-123' // Manager ID - would come from user management
+      );
+    } catch (error) {
+      console.error('Failed to send notification:', error);
+    }
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,8 +225,8 @@ export const RequestForm: React.FC<RequestFormProps> = ({ onSubmit, onCancel, in
                     <FormItem>
                       <FormLabel>تاریخ شروع مرخصی (شمسی)</FormLabel>
                       <FormControl>
-                        <JalaliDatePicker
-                          value={field.value ? field.value.toISOString() : ''}
+                        <PersianDatePicker
+                          value={field.value ? field.value.toISOString().split('T')[0] : ''}
                           onChange={(date) => field.onChange(new Date(date))}
                           placeholder="انتخاب تاریخ شروع"
                         />
@@ -229,8 +243,8 @@ export const RequestForm: React.FC<RequestFormProps> = ({ onSubmit, onCancel, in
                     <FormItem>
                       <FormLabel>تاریخ پایان مرخصی (شمسی)</FormLabel>
                       <FormControl>
-                        <JalaliDatePicker
-                          value={field.value ? field.value.toISOString() : ''}
+                        <PersianDatePicker
+                          value={field.value ? field.value.toISOString().split('T')[0] : ''}
                           onChange={(date) => field.onChange(new Date(date))}
                           placeholder="انتخاب تاریخ پایان"
                         />

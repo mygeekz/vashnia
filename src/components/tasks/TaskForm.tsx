@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { JalaliDatePicker } from "@/components/ui/jalali-date-picker";
+import PersianDatePicker from "@/components/PersianDatePicker";
 import { toJalaliDisplay, jalaliToGregorian, toJalaliObject } from "@/utils/date";
 
 interface Task {
@@ -172,7 +172,7 @@ export function TaskForm({ task, employees, departments, onSubmit, onCancel }: T
               <FormItem>
                 <FormLabel>تاریخ تعیین *</FormLabel>
                 <FormControl>
-                  <JalaliDatePicker
+                  <PersianDatePicker
                     value={field.value}
                     onChange={field.onChange}
                     placeholder="انتخاب تاریخ تعیین"
@@ -191,7 +191,7 @@ export function TaskForm({ task, employees, departments, onSubmit, onCancel }: T
               <FormItem>
                 <FormLabel>تاریخ تحویل *</FormLabel>
                 <FormControl>
-                  <JalaliDatePicker
+                  <PersianDatePicker
                     value={field.value}
                     onChange={field.onChange}
                     placeholder="انتخاب تاریخ تحویل"

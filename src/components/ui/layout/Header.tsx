@@ -13,17 +13,12 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export const Header = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [notifications] = React.useState([
-    { id: 1, title: 'درخواست جدید', message: 'احمد رضایی درخواست مرخصی ارسال کرد', time: '۵ دقیقه پیش', unread: true },
-    { id: 2, title: 'گزارش فروش', message: 'گزارش روزانه فروش آماده است', time: '۱ ساعت پیش', unread: true },
-    { id: 3, title: 'تذکر سیستم', message: 'بروزرسانی سیستم شب امروز', time: '۲ ساعت پیش', unread: false }
-  ]);
-
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const { notifications, unreadCount, markAsRead } = useNotifications('current-user-id');
 
   const handleLogout = () => {
     navigate('/login');
@@ -96,15 +91,21 @@ export const Header = () => {
               <DropdownMenuLabel className="text-center">اطلاع‌رسانی‌ها</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {notifications.map((notification) => (
-                <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-4 space-y-1">
+                <DropdownMenuItem 
+                  key={notification.id} 
+                  className="flex flex-col items-start p-4 space-y-1"
+                  onClick={() => markAsRead(notification.id)}
+                >
                   <div className="flex items-center justify-between w-full">
                     <h4 className="text-sm font-medium">{notification.title}</h4>
-                    {notification.unread && (
+                    {!notification.isRead && (
                       <div className="w-2 h-2 bg-primary rounded-full"></div>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{notification.message}</p>
-                  <span className="text-xs text-muted-foreground">{notification.time}</span>
+                  <p className="text-sm text-muted-foreground">{notification.body}</p>
+                  <span className="text-xs text-muted-foreground">
+                    {notification.createdAt.toLocaleDateString('fa-IR')}
+                  </span>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
