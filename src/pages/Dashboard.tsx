@@ -1,5 +1,6 @@
 import { KpiCard } from '@/components/ui/dashboard/KpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { 
   Users, 
   CheckCircle, 
@@ -8,8 +9,10 @@ import {
   Activity,
   Calendar
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   // Mock data - will be replaced with real data later
   const kpiData = [
     {
@@ -119,18 +122,27 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="p-4 bg-gradient-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">
+            <Button 
+              onClick={() => navigate('/employees/new')}
+              className="p-4 bg-gradient-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity h-auto flex-col"
+            >
               <Users className="w-6 h-6 mx-auto mb-2" />
               <p className="text-sm font-medium">افزودن کارمند</p>
-            </button>
-            <button className="p-4 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors">
+            </Button>
+            <Button 
+              onClick={() => navigate('/tasks', { state: { openNewTask: true } })}
+              className="p-4 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors h-auto flex-col"
+            >
               <CheckCircle className="w-6 h-6 mx-auto mb-2" />
               <p className="text-sm font-medium">ثبت وظیفه</p>
-            </button>
-            <button className="p-4 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors">
+            </Button>
+            <Button 
+              onClick={() => navigate('/sales-report/new')}
+              className="p-4 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors h-auto flex-col"
+            >
               <TrendingUp className="w-6 h-6 mx-auto mb-2" />
               <p className="text-sm font-medium">گزارش فروش</p>
-            </button>
+            </Button>
           </div>
         </CardContent>
       </Card>

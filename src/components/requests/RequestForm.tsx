@@ -44,19 +44,24 @@ type RequestFormData = z.infer<typeof requestSchema>;
 interface RequestFormProps {
   onSubmit: (data: RequestFormData & { attachments: string[] }) => void;
   onCancel: () => void;
+  initialData?: any;
 }
 
-export const RequestForm: React.FC<RequestFormProps> = ({ onSubmit, onCancel }) => {
-  const [attachments, setAttachments] = useState<string[]>([]);
+export const RequestForm: React.FC<RequestFormProps> = ({ onSubmit, onCancel, initialData }) => {
+  const [attachments, setAttachments] = useState<string[]>(initialData?.attachments || []);
   
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
     defaultValues: {
-      employeeName: '',
-      employeeId: '',
-      requestType: '',
-      priority: 'medium',
-      description: ''
+      employeeName: initialData?.employeeName || '',
+      employeeId: initialData?.employeeId || '',
+      requestType: initialData?.requestType || '',
+      priority: initialData?.priority || 'medium',
+      description: initialData?.description || '',
+      startDate: initialData?.startDate ? new Date(initialData.startDate) : undefined,
+      endDate: initialData?.endDate ? new Date(initialData.endDate) : undefined,
+      amount: initialData?.amount || undefined,
+      reason: initialData?.reason || ''
     }
   });
 

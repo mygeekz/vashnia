@@ -102,7 +102,9 @@ const Requests = () => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [userRole] = useState<'employee' | 'admin' | 'manager' | 'ceo'>('admin');
+  const [activeTab, setActiveTab] = useState("all-requests");
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -148,28 +150,57 @@ const Requests = () => {
   });
 
   const handleCreateRequest = (requestData: any) => {
-    const newRequest: Request = {
-      id: `REQ${String(requests.length + 1).padStart(3, '0')}`,
-      ...requestData,
-      status: 'pending' as const,
-      submissionDate: new Date().toLocaleDateString('fa-IR'),
-      comments: [],
-      history: [
-        {
-          action: "درخواست ثبت شد",
-          author: requestData.employeeName,
-          timestamp: new Date().toLocaleString('fa-IR')
-        }
-      ]
-    };
+    if (isEditMode && selectedRequest) {
+      // Update existing request
+      const updatedRequest: Request = {
+        ...selectedRequest,
+        ...requestData,
+        history: [
+          ...selectedRequest.history,
+          {
+            action: "درخواست ویرایش شد",
+            author: requestData.employeeName,
+            timestamp: new Date().toLocaleString('fa-IR')
+          }
+        ]
+      };
+      
+      setRequests(prev => prev.map(req => 
+        req.id === selectedRequest.id ? updatedRequest : req
+      ));
+      
+      toast({
+        title: "درخواست ویرایش شد",
+        description: `درخواست ${updatedRequest.id} با موفقیت به‌روزرسانی شد`,
+      });
+    } else {
+      // Create new request
+      const newRequest: Request = {
+        id: `REQ${String(requests.length + 1).padStart(3, '0')}`,
+        ...requestData,
+        status: 'pending' as const,
+        submissionDate: new Date().toLocaleDateString('fa-IR'),
+        comments: [],
+        history: [
+          {
+            action: "درخواست ثبت شد",
+            author: requestData.employeeName,
+            timestamp: new Date().toLocaleString('fa-IR')
+          }
+        ]
+      };
+      
+      setRequests([...requests, newRequest]);
+      
+      toast({
+        title: "درخواست ثبت شد",
+        description: `درخواست ${newRequest.id} با موفقیت ثبت شد`,
+      });
+    }
     
-    setRequests([...requests, newRequest]);
     setIsFormOpen(false);
-    
-    toast({
-      title: "درخواست ثبت شد",
-      description: `درخواست ${newRequest.id} با موفقیت ثبت شد`,
-    });
+    setIsEditMode(false);
+    setSelectedRequest(null);
   };
 
   const handleUpdateRequestStatus = (requestId: string, newStatus: string, comment?: string) => {
@@ -241,7 +272,13 @@ const Requests = () => {
             دانلود گزارش
           </Button>
           
-          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <Dialog open={isFormOpen} onOpenChange={(open) => {
+              setIsFormOpen(open);
+              if (!open) {
+                setIsEditMode(false);
+                setSelectedRequest(null);
+              }
+            }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 ml-2" />
@@ -250,18 +287,28 @@ const Requests = () => {
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>ثبت درخواست جدید</DialogTitle>
+                <DialogTitle>
+                  {isEditMode ? `ویرایش درخواست ${selectedRequest?.id}` : "ثبت درخواست جدید"}
+                </DialogTitle>
                 <DialogDescription>
-                  فرم زیر را برای ثبت درخواست جدید تکمیل کنید
+                  {isEditMode ? "اطلاعات درخواست را ویرایش کنید" : "فرم زیر را برای ثبت درخواست جدید تکمیل کنید"}
                 </DialogDescription>
               </DialogHeader>
-              <RequestForm onSubmit={handleCreateRequest} onCancel={() => setIsFormOpen(false)} />
+              <RequestForm 
+                onSubmit={handleCreateRequest} 
+                onCancel={() => {
+                  setIsFormOpen(false);
+                  setIsEditMode(false);
+                  setSelectedRequest(null);
+                }}
+                initialData={isEditMode ? selectedRequest : undefined}
+              />
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-      <Tabs defaultValue="all-requests" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="all-requests">همه درخواست‌ها</TabsTrigger>
           <TabsTrigger value="dashboard">داشبورد</TabsTrigger>
@@ -385,7 +432,15 @@ const Requests = () => {
                       </Dialog>
                       
                       {(userRole === 'admin' || userRole === 'manager' || userRole === 'ceo') && (
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedRequest(request);
+                            setIsEditMode(true);
+                            setIsFormOpen(true);
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                       )}
@@ -411,15 +466,74 @@ const Requests = () => {
 
         <TabsContent value="pending">
           <div className="grid gap-4">
-            {requests.filter(r => r.status === 'pending' || r.status === 'under-review').map((request) => (
-              <Card key={request.id}>
+            {filteredRequests.filter(r => r.status === 'pending' || r.status === 'under-review').map((request) => (
+              <Card key={request.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-semibold">{request.requestType}</h3>
-                      <p className="text-sm text-muted-foreground">{request.employeeName} - {request.submissionDate}</p>
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-4">
+                        <h3 className="font-semibold text-lg">{request.requestType}</h3>
+                        {getStatusBadge(request.status)}
+                        {getPriorityBadge(request.priority)}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
+                        <div>
+                          <span className="font-medium">شماره درخواست:</span>
+                          <p>{request.id}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">کارمند:</span>
+                          <p>{request.employeeName}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">تاریخ ثبت:</span>
+                          <p>{request.submissionDate}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">مدت:</span>
+                          <p>{request.startDate && request.endDate ? `${request.startDate} - ${request.endDate}` : 'نامشخص'}</p>
+                        </div>
+                      </div>
+                      
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {request.description}
+                      </p>
                     </div>
-                    {getStatusBadge(request.status)}
+                    
+                    <div className="flex gap-2 mr-4">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" onClick={() => setSelectedRequest(request)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>جزئیات درخواست {request.id}</DialogTitle>
+                          </DialogHeader>
+                          <RequestDetails 
+                            request={request} 
+                            onUpdateStatus={handleUpdateRequestStatus}
+                            userRole={userRole}
+                          />
+                        </DialogContent>
+                      </Dialog>
+                      
+                      {(userRole === 'admin' || userRole === 'manager' || userRole === 'ceo') && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedRequest(request);
+                            setIsEditMode(true);
+                            setIsFormOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -429,15 +543,60 @@ const Requests = () => {
 
         <TabsContent value="completed">
           <div className="grid gap-4">
-            {requests.filter(r => r.status.includes('approved') || r.status.includes('rejected')).map((request) => (
-              <Card key={request.id}>
+            {filteredRequests.filter(r => r.status.includes('approved') || r.status.includes('rejected')).map((request) => (
+              <Card key={request.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-semibold">{request.requestType}</h3>
-                      <p className="text-sm text-muted-foreground">{request.employeeName} - {request.submissionDate}</p>
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-4">
+                        <h3 className="font-semibold text-lg">{request.requestType}</h3>
+                        {getStatusBadge(request.status)}
+                        {getPriorityBadge(request.priority)}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
+                        <div>
+                          <span className="font-medium">شماره درخواست:</span>
+                          <p>{request.id}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">کارمند:</span>
+                          <p>{request.employeeName}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">تاریخ ثبت:</span>
+                          <p>{request.submissionDate}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">وضعیت نهایی:</span>
+                          <p>{request.status.includes('approved') ? 'تایید شده' : 'رد شده'}</p>
+                        </div>
+                      </div>
+                      
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {request.description}
+                      </p>
                     </div>
-                    {getStatusBadge(request.status)}
+                    
+                    <div className="flex gap-2 mr-4">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" onClick={() => setSelectedRequest(request)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>جزئیات درخواست {request.id}</DialogTitle>
+                          </DialogHeader>
+                          <RequestDetails 
+                            request={request} 
+                            onUpdateStatus={handleUpdateRequestStatus}
+                            userRole={userRole}
+                          />
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

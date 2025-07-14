@@ -61,10 +61,6 @@ const addEmployeeSchema = z.object({
   gender: z.enum(['male', 'female'], {
     message: 'انتخاب جنسیت اجباری است'
   }),
-  militaryStatus: z.string().optional(),
-  serviceDate: z.date({
-    message: 'انتخاب تاریخ خدمت اجباری است'
-  }),
   additionalNotes: z.string().optional(),
   tasks: z.array(z.object({
     title: z.string().min(1, 'عنوان وظیفه اجباری است'),
@@ -73,15 +69,6 @@ const addEmployeeSchema = z.object({
     assignedDate: z.date(),
     dueDate: z.date().optional(),
   })).optional(),
-}).refine((data) => {
-  // If gender is male, military status is required
-  if (data.gender === 'male' && !data.militaryStatus) {
-    return false;
-  }
-  return true;
-}, {
-  message: 'وضعیت نظام وظیفه برای مردان اجباری است',
-  path: ['militaryStatus']
 });
 
 type AddEmployeeForm = z.infer<typeof addEmployeeSchema>;
@@ -117,11 +104,9 @@ export default function AddEmployee() {
       monthlySalary: 0,
       status: 'active',
       gender: 'male' as const,
-      militaryStatus: '',
       additionalNotes: '',
       tasks: [],
       dateOfJoining: new Date(),
-      serviceDate: new Date(),
     },
   });
 
@@ -131,8 +116,6 @@ export default function AddEmployee() {
     name: 'tasks',
   });
 
-  // Watch gender to conditionally disable military status
-  const watchedGender = form.watch('gender');
 
   const onSubmit = async (data: AddEmployeeForm) => {
     setIsLoading(true);
@@ -397,13 +380,7 @@ export default function AddEmployee() {
                     <FormLabel>جنسیت *</FormLabel>
                     <FormControl>
                       <RadioGroup
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          // Reset military status when gender changes to female
-                          if (value === 'female') {
-                            form.setValue('militaryStatus', '');
-                          }
-                        }}
+                        onValueChange={field.onChange}
                         value={field.value}
                         className="flex gap-6"
                         disabled={isLoading}
@@ -423,83 +400,6 @@ export default function AddEmployee() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="militaryStatus"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>وضعیت نظام وظیفه {watchedGender === 'male' ? '*' : ''}</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      disabled={isLoading || watchedGender === 'female'}
-                    >
-                      <FormControl>
-                        <SelectTrigger className={cn(
-                          "w-full",
-                          watchedGender === 'female' && "opacity-50 cursor-not-allowed"
-                        )}>
-                          <SelectValue placeholder={
-                            watchedGender === 'female' 
-                              ? "برای زنان قابل انتخاب نیست" 
-                              : "انتخاب وضعیت نظام وظیفه"
-                          } />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-card">
-                        <SelectItem value="ended">پایان خدمت</SelectItem>
-                        <SelectItem value="exempt">معاف</SelectItem>
-                        <SelectItem value="liable">مشمول</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="serviceDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>تاریخ خدمت (شمسی) *</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-right font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                            disabled={isLoading}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? (
-                              format(field.value, "PPP", { locale: faIR })
-                            ) : (
-                              <span>انتخاب تاریخ خدمت</span>
-                            )}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 
