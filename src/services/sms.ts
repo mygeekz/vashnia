@@ -1,94 +1,42 @@
-// SMS service for MeliPayamak integration
-// This would typically be in a backend service, but showing frontend structure
-
-interface SMSPattern {
-  to: string;
-  patternId: number;
-  variables: Record<string, string>;
-}
-
-interface SMSConfig {
-  username: string;
-  password: string;
-  baseUrl: string;
-}
-
 class SMSService {
-  private config: SMSConfig;
+  private baseUrl: string;
+  private apiKey: string;
+  private lineNumber: string;
 
   constructor() {
-    this.config = {
-      username: process.env.REACT_APP_MELI_USER || '',
-      password: process.env.REACT_APP_MELI_PASS || '',
-      baseUrl: 'https://rest.payamak-panel.com/api/SendSMS'
-    };
+    // در Vite باید از import.meta.env استفاده کنیم
+    this.baseUrl = import.meta.env.VITE_SMS_API_BASE_URL || "https://sms.yourdomain.com";
+    this.apiKey = import.meta.env.VITE_SMS_API_KEY || "";
+    this.lineNumber = import.meta.env.VITE_SMS_LINE_NUMBER || "";
   }
 
-  /**
-   * Send SMS using MeliPayamak Pattern API
-   * @param to - Receiver mobile number (09xxxxxxxxx)
-   * @param patternId - Pattern ID from MeliPayamak panel
-   * @param variables - Variables to replace in pattern
-   */
-  async sendPattern({ to, patternId, variables }: SMSPattern): Promise<boolean> {
+  async send(to: string, text: string) {
     try {
-      const formData = new FormData();
-      formData.append('username', this.config.username);
-      formData.append('password', this.config.password);
-      formData.append('to', to);
-      formData.append('text', JSON.stringify(variables));
-      formData.append('bodyId', patternId.toString());
-
-      const response = await fetch(`${this.config.baseUrl}/BaseServiceNumber`, {
-        method: 'POST',
-        body: formData,
+      const res = await fetch(`${this.baseUrl}/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-KEY": this.apiKey,
+        },
+        body: JSON.stringify({
+          mobile: to,
+          message: text,
+          sender: this.lineNumber,
+        }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "خطا در ارسال پیامک");
       }
 
-      const result = await response.json();
-      console.log('SMS sent successfully:', result);
-      return true;
-    } catch (error) {
-      console.error('SMS sending failed:', error);
-      return false;
+      return data;
+    } catch (error: any) {
+      console.error("SMS Error:", error.message);
+      throw error;
     }
-  }
-
-  /**
-   * Send notification for new request
-   */
-  async sendNewRequestNotification(managerMobile: string, employeeName: string, requestType: string): Promise<boolean> {
-    const patternId = parseInt(process.env.REACT_APP_MELI_PATTERN_NEW_REQ || '0');
-    
-    return await this.sendPattern({
-      to: managerMobile,
-      patternId,
-      variables: {
-        name: employeeName,
-        type: requestType
-      }
-    });
-  }
-
-  /**
-   * Send notification for request approval/rejection
-   */
-  async sendRequestStatusNotification(employeeMobile: string, employeeName: string, status: string): Promise<boolean> {
-    const patternId = parseInt(process.env.REACT_APP_MELI_PATTERN_APPROVED || '0');
-    
-    return await this.sendPattern({
-      to: employeeMobile,
-      patternId,
-      variables: {
-        name: employeeName,
-        status: status === 'approved' ? 'تایید' : 'رد'
-      }
-    });
   }
 }
 
-export const smsService = new SMSService();
-export default smsService;
+export default SMSService;
