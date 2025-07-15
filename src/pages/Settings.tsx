@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +58,12 @@ export default function Settings() {
     emailNotifications: true,
     pushNotifications: true,
     weeklyReports: false
+  });
+
+  const [smsSettings, setSmsSettings] = useState({
+    username: '',
+    password: '',
+    pattern: ''
   });
 
   // User Management State
@@ -220,12 +226,13 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="profile">پروفایل</TabsTrigger>
           <TabsTrigger value="security">امنیت</TabsTrigger>
           <TabsTrigger value="notifications">اطلاع‌رسانی</TabsTrigger>
           <TabsTrigger value="appearance">ظاهر</TabsTrigger>
           <TabsTrigger value="users">مدیریت کاربران</TabsTrigger>
+          <TabsTrigger value="sms">پیامک</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -637,6 +644,57 @@ export default function Settings() {
                   </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sms">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                تنظیمات ملی پیامک
+              </CardTitle>
+              <CardDescription>
+                وارد کردن اطلاعات اتصال به ملی پیامک و الگوی پیامک
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="smsUser">نام کاربری</Label>
+                  <Input
+                    id="smsUser"
+                    value={smsSettings.username}
+                    onChange={(e) => setSmsSettings(prev => ({ ...prev, username: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="smsPass">رمز عبور</Label>
+                  <Input
+                    id="smsPass"
+                    type="password"
+                    value={smsSettings.password}
+                    onChange={(e) => setSmsSettings(prev => ({ ...prev, password: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="smsPattern">شناسه الگو</Label>
+                  <Input
+                    id="smsPattern"
+                    value={smsSettings.pattern}
+                    onChange={(e) => setSmsSettings(prev => ({ ...prev, pattern: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <Button
+                onClick={() => {
+                  console.log('send sms', smsSettings);
+                }}
+                className="w-full md:w-auto"
+              >
+                ارسال پیامک آزمایشی
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

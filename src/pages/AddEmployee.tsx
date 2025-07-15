@@ -50,6 +50,7 @@ const addEmployeeSchema = z.object({
   fullName: z.string().min(2, 'نام باید حداقل ۲ کاراکتر باشد'),
   nationalId: z.string().regex(/^\d{10}$/, 'کد ملی باید ۱۰ رقم باشد'),
   employeeId: z.string().min(3, 'کد کارمندی باید حداقل ۳ کاراکتر باشد'),
+  username: z.string().min(3, 'نام کاربری باید حداقل ۳ کاراکتر باشد'),
   jobTitle: z.string().min(2, 'سمت باید حداقل ۲ کاراکتر باشد'),
   department: z.string().min(1, 'انتخاب بخش اجباری است'),
   branch: z.string().min(1, 'انتخاب شعبه اجباری است'),
@@ -96,6 +97,7 @@ export default function AddEmployee() {
       fullName: '',
       nationalId: '',
       employeeId: '',
+      username: '',
       jobTitle: '',
       department: '',
       branch: '',
@@ -324,8 +326,26 @@ export default function AddEmployee() {
                   <FormItem>
                     <FormLabel>کد کارمندی *</FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         placeholder="EMP001"
+                        {...field}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>نام کاربری *</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="username"
                         {...field}
                         disabled={isLoading}
                       />
