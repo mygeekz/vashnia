@@ -1,151 +1,144 @@
+import { useEffect, useState } from 'react';
 import { KpiCard } from '@/components/ui/dashboard/KpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/lib/auth';
 import { 
   Users, 
   CheckCircle, 
   Clock, 
-  TrendingUp,
   Activity,
-  Calendar
+  Calendar,
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { formatDistanceToNow } from 'date-fns-jalali';
+
+// تابع برای دریافت داده‌ها از API
+const fetchDashboardStats = async () => {
+  const response = await fetch('/api/dashboard/stats');
+  if (!response.ok) {
+    throw new Error('خطا در ارتباط با سرور');
+  }
+  return response.json();
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  // Mock data - will be replaced with real data later
-  const kpiData = [
-    {
-      title: "کل کارکنان",
-      value: 20,
-      icon: Users,
-      trend: { value: 5, label: "از ماه گذشته" }
-    },
-    {
-      title: "وظایف تکمیل شده",
-      value: 45,
-      icon: CheckCircle,
-      trend: { value: 12, label: "این هفته" }
-    },
-    {
-      title: "وظایف در انتظار",
-      value: 12,
-      icon: Clock,
-      trend: { value: -8, label: "از دیروز" }
-    },
-    {
-      title: "فروش امروز",
-      value: "₯۱۲٫۵M",
-      icon: TrendingUp,
-      trend: { value: 23, label: "از دیروز" }
-    }
-  ];
+  const { user } = useAuth();
 
-  const recentActivities = [
-    { id: 1, text: "کارمند جدید اضافه شد", time: "۲ ساعت پیش", type: "user" },
-    { id: 2, text: "گزارش فروش شعبه تهران", time: "۴ ساعت پیش", type: "sales" },
-    { id: 3, text: "درخواست مرخصی تایید شد", time: "۶ ساعت پیش", type: "leave" },
-    { id: 4, text: "وظیفه جدید تعریف شد", time: "۸ ساعت پیش", type: "task" }
-  ];
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: fetchDashboardStats,
+  });
+
+  // نمایش حالت لودینگ
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
+
+  // نمایش حالت خطا
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-lg bg-red-50 p-8 text-red-600">
+        <AlertCircle className="h-12 w-12" />
+        <h2 className="mt-4 text-xl font-bold">خطا در بارگذاری داشبورد</h2>
+        <p>{error.message}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Welcome Section */}
-      <div className="bg-gradient-primary rounded-2xl p-8 text-primary-foreground shadow-strong">
-        <h1 className="text-3xl font-bold mb-2">خوش آمدید به سیستم مدیریت وش‌نیا</h1>
-        <p className="text-primary-foreground/80 text-lg">
-          مدیریت کارکنان، وظایف و فروش در یک مکان
-        </p>
+    <div className="space-y-8 p-6 md:p-8 bg-gradient-to-r from-blue-100 to-green-100 rounded-lg">
+      {/* بخش خوش‌آمدگویی */}
+      <div className="bg-white rounded-xl p-6 shadow-lg transform transition-all hover:scale-105 duration-500">
+        <h1 className="text-3xl font-semibold text-gray-700">خوش آمدید، {user?.fullName || 'کاربر'}!</h1>
+        <p className="text-gray-500">در اینجا خلاصه‌ای از فعالیت‌های سیستم شما آمده است.</p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpiData.map((kpi, index) => (
-          <div 
-            key={index}
-            className="animate-slide-up"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <KpiCard
-              title={kpi.title}
-              value={kpi.value}
-              icon={kpi.icon}
-              trend={kpi.trend}
-            />
-          </div>
-        ))}
+      {/* کارت‌های آمار کلیدی */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* فقط کارت‌های KPI برای نمایش آمار کلیدی */}
+        <KpiCard
+          title="کل کارکنان"
+          value={data?.totalEmployees ?? 0}
+          icon={Users}
+          className="animate-fade-in transform transition-all hover:scale-105 duration-500"
+        />
+        <KpiCard
+          title="وظایف تکمیل شده"
+          value={data?.completedTasks ?? 0}
+          icon={CheckCircle}
+          className="animate-fade-in transform transition-all hover:scale-105 duration-500"
+        />
+        <KpiCard
+          title="وظایف در انتظار"
+          value={data?.pendingTasks ?? 0}
+          icon={Clock}
+          className="animate-fade-in transform transition-all hover:scale-105 duration-500"
+        />
       </div>
 
-      {/* Charts and Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Stats Chart Placeholder */}
-        <Card className="lg:col-span-2 glass-card">
+      {/* بخش فعالیت‌های اخیر و اقدامات سریع */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2 bg-white shadow-md rounded-lg transform transition-all hover:scale-105 duration-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="w-5 h-5" />
-              نمودار عملکرد هفتگی
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 bg-gradient-secondary rounded-lg flex items-center justify-center">
-              <p className="text-muted-foreground">نمودارهای تفصیلی در نسخه بعدی</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Activities */}
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold text-gray-700">
+              <Calendar className="h-5 w-5 text-blue-500" />
               فعالیت‌های اخیر
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-3 p-3 bg-secondary/50 rounded-lg">
-                <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">{activity.text}</p>
-                  <p className="text-xs text-muted-foreground">{activity.time}</p>
+            {data?.recentActivities?.length > 0 ? (
+              data.recentActivities.map((activity: any) => (
+                <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg shadow-sm">
+                  <Activity className="h-5 w-5 text-indigo-500" />
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-800">{activity.title}</p>
+                    <p className="text-xs text-gray-500">
+                      {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-center text-gray-500">فعالیت اخیری ثبت نشده است.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white shadow-md rounded-lg transform transition-all hover:scale-105 duration-500">
+          <CardHeader>
+            <CardTitle>عملیات سریع</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col space-y-3">
+            <Button onClick={() => navigate('/employees/add')} variant="outline">
+              <Users className="ml-2 h-4 w-4" /> افزودن کارمند
+            </Button>
+            <Button onClick={() => navigate('/tasks')} variant="outline">
+              <CheckCircle className="ml-2 h-4 w-4" /> مدیریت وظایف
+            </Button>
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>عملیات سریع</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button 
-              onClick={() => navigate('/employees/new')}
-              className="p-4 bg-gradient-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity h-auto flex-col"
-            >
-              <Users className="w-6 h-6 mx-auto mb-2" />
-              <p className="text-sm font-medium">افزودن کارمند</p>
-            </Button>
-            <Button 
-              onClick={() => navigate('/tasks?new=1')}
-              className="p-4 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors h-auto flex-col"
-            >
-              <CheckCircle className="w-6 h-6 mx-auto mb-2" />
-              <p className="text-sm font-medium">ثبت وظیفه</p>
-            </Button>
-            <Button 
-              onClick={() => navigate('/sales-report/new')}
-              className="p-4 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors h-auto flex-col"
-            >
-              <TrendingUp className="w-6 h-6 mx-auto mb-2" />
-              <p className="text-sm font-medium">گزارش فروش</p>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
+
+// کامپوننت اسکلت برای نمایش در زمان لودینگ
+const DashboardSkeleton = () => (
+  <div className="space-y-6 p-4 md:p-6 bg-gradient-to-r from-blue-100 to-green-100 rounded-lg">
+    <Skeleton className="h-36 w-full rounded-lg" />
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <Skeleton className="h-32 rounded-lg" />
+      <Skeleton className="h-32 rounded-lg" />
+      <Skeleton className="h-32 rounded-lg" />
+    </div>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <Skeleton className="h-64 rounded-lg lg:col-span-2" />
+      <Skeleton className="h-64 rounded-lg" />
+    </div>
+  </div>
+);
